@@ -1,0 +1,34 @@
+{
+    // Sample reference launch.json file to go into .vscode
+    // This file is added to Git but not .vscode
+    //
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Launch Starter",
+            "request": "launch",
+            "mainClass": "org.opennms.moscdrprocessor.Starter",
+            "projectName": "moscdrprocessor",
+            "args": [
+                "watch",
+                "-v",
+                "--config", "~/projects/mos-cdr-processor/runConfig.json"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "Attach",
+            "request": "attach"
+        }
+    ]
+}

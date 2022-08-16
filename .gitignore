@@ -1,0 +1,23 @@
+.gitignore
+!/.gitignore
+data
+\#*#
+*~
+.swp
+.*.swp
+.swp
+.gwt
+.gwt-tmp
+target
+.classpath
+.externalToolBuilders
+.project
+.settings
+.springBeans
+# Allowing .vscode for now. Make sure not to check in any local-specific data
+#.vscode
+.DS_Store
+build.properties
+*.iml
+*.iws
+*.ipr
