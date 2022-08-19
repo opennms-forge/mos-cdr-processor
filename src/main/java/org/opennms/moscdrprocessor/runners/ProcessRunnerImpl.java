@@ -54,7 +54,7 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
 
         CdrRecord cdrRecord = parseFileToCdrRecord();
 
-        if (!Strings.isNullOrEmpty(runConfig.outputFilePath)) {
+        if (runConfig.enableOutput && !Strings.isNullOrEmpty(runConfig.outputFilePath)) {
             // output json
             try {
                 outputCdrRecord(cdrRecord);
