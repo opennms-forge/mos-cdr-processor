@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<features name="moscdrprocessor" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
+    <feature name="moscdrprocessor" version="${project.version}" description="OpenNMS MOS CDR Processor Application">
+        <feature>guava</feature>
+        <feature>commons-io</feature>
+        <bundle>mvn:org.opennms/moscdrprocessor/${project.version}</bundle>
+        <bundle>wrap:mvn:args4j/args4j/${args4jVersion}</bundle>
+    </feature>
+</features>

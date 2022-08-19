@@ -71,10 +71,17 @@
                 <groupId>org.dstovall</groupId>
                 <artifactId>onejar-maven-plugin</artifactId>
                 <version>1.4.4</version>
-                <configuration>
-                    <filename>${project.artifactId}-${project.version}-onejar.jar</filename>
-                    <mainClass>org.opennms.moscdrprocessor.Starter</mainClass>
-                </configuration>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <filename>${project.artifactId}-${project.version}-onejar.jar</filename>
+                            <mainClass>org.opennms.moscdrprocessor.Starter</mainClass>
+                        </configuration>
+                        <goals>
+                            <goal>one-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
