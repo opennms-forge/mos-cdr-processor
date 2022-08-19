@@ -1,6 +1,7 @@
 {
     "filePath": "~/projects/mos-cdr-processor/data/CDC_cdr202206130354a",
     "headerFilePath": "~/projects/mos-cdr-processor/data/SBC_Headers.csv",
+    "enableOutput": false,
     "outputFilePath": "~/projects/mos-cdr-processor/data/cdrOutput.json",
     "hostName": "localhost",
     "port": 2003,

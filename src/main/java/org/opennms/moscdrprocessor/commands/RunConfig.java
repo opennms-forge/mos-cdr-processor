@@ -38,6 +38,8 @@ public class RunConfig {
 
     public String outputFilePath;
 
+    public boolean enableOutput;
+
     public String hostName;
 
     public Integer port;
