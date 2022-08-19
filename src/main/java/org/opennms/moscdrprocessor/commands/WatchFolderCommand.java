@@ -33,9 +33,11 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.IOException;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -241,6 +243,23 @@ public class WatchFolderCommand extends Command {
 
                 // For now, blocking until processing current file is done, but could launch multiple threads here
                 runner.run();
+
+                // Archive the file, removing it from drop folder so it's not reprocessed
+                if (!Strings.isNullOrEmpty(this.runConfig.archiveFolder)) {
+                    try {
+                        File f = new File(clonedConfig.filePath);
+                        Path source = Path.of(clonedConfig.filePath);
+                        Path dest = Path.of(clonedConfig.archiveFolder, f.getName());
+
+                        LOG.info("Archiving file '{}' to '{}'",
+                            source.toString(), dest.toString());
+
+                        Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        LOG.error("Could not archive file '{}' to folder '{}': {}",
+                            clonedConfig.filePath, clonedConfig.archiveFolder, e.getMessage());
+                    }
+                }
             }
         }
 

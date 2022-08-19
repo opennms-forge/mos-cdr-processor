@@ -54,5 +54,7 @@ public class RunConfig {
 
     public String watchFolder;
 
+    public String archiveFolder;
+
     public List<String> extra = new ArrayList<>();
 }
