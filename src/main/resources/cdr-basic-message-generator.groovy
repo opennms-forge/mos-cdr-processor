@@ -159,8 +159,8 @@ class CdrGenerator {
                 log.debug("Found record with status of 2");
 
                 // Pick out just the columns we are interested in
-                addValueIfPresent(messages, record, "eth0.mos-Acme_Calling_MOS", ACME_CALLING_MOS_INDEX, timestamp);
-                addValueIfPresent(messages, record, "eth0.mos-Acme_Called_MOS", ACME_CALLED_MOS_INDEX, timestamp);
+                addValueIfPresent(messages, record, "mos-cdr.127_0_0_1.Acme_Calling_MOS", ACME_CALLING_MOS_INDEX, timestamp);
+                addValueIfPresent(messages, record, "mos-cdr.127_0_0_1.Acme_Called_MOS", ACME_CALLED_MOS_INDEX, timestamp);
             }
         } catch (Exception e) {
             throw e;
