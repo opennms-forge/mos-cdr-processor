@@ -99,7 +99,7 @@ public class CdrParserImpl implements CdrParser {
 
         // withQuote(null) may solve issue with embedded quote characters
         try (Reader reader = new FileReader(filePath);
-            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withQuote(null))) {
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withTrim().withQuote(null))) {
 
             List<CSVRecord> csvRecords = csvParser.getRecords();
             int rowIndex = 0;
@@ -111,9 +111,11 @@ public class CdrParserImpl implements CdrParser {
                 // We only want items having "Acct-Status-Type" of 2
                 // This should be the first column
                 // Other types seem to actually have different fields and CSV won't parse correctly
+                String firstRecord = recordSize > 0 ? record.get(0) : null;
+
                 boolean shouldProcess = recordSize > 0 &&
-                    record.get(0) != null &&
-                    record.get(0).equals("2");
+                    firstRecord != null &&
+                    firstRecord.equals("2");
 
                 if (!shouldProcess) {
                     rowIndex++;

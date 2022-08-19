@@ -31,6 +31,7 @@ package org.opennms.moscdrprocessor.log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
@@ -43,25 +44,25 @@ public class ConsoleLogAdapter implements LogAdapter {
     private boolean debug;
 
     @Override
-    public void warn(String warnMessage, Object... args) {
-        System.out.println(String.format("WARNING: %s", format(warnMessage, args)));
+    public void warn(String message, Object... args) {
+        System.out.println(String.format("%s: %s", formatHeader("WARNING"), format(message, args)));
     }
 
     @Override
     public void error(String message, Object... args) {
-        System.err.println(format(message, args));
+        System.err.println(String.format("%s: %s", formatHeader("ERROR"), format(message, args)));
     }
 
     @Override
     public void debug(String message, Object... args) {
         if (debug) {
-            System.out.println(format(message, args));
+            System.out.println(String.format("%s: %s", formatHeader("DEBUG"), format(message, args)));
         }
     }
 
     @Override
     public void info(String message, Object... args) {
-        System.out.println(format(message, args));
+        System.out.println(String.format("%s: %s", formatHeader("INFO"), format(message, args)));
     }
 
     @Override
@@ -88,5 +89,11 @@ public class ConsoleLogAdapter implements LogAdapter {
 
     public OutputStream getOutputStream() {
         return System.out;
+    }
+
+    protected String formatHeader(String header) {
+        String date = new Date().toInstant().toString();
+
+        return String.format("[%s][%s]", date, header);
     }
 }

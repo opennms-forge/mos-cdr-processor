@@ -39,6 +39,8 @@ import java.nio.file.Paths;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.common.base.Strings;
 import org.kohsuke.args4j.CmdLineException;
@@ -59,6 +61,12 @@ public class WatchFolderCommand extends Command {
 
     private RunConfig runConfig;
 
+    private volatile boolean stopConsuming;
+
+    private Object lock = new Object();
+
+    private List<String> fileQueue = new ArrayList<>();
+
     @Override
     protected void execute() throws CmdRunException {
         LOG.info("In WatchFolderCommand.execute");
@@ -76,10 +84,35 @@ public class WatchFolderCommand extends Command {
             throw new CmdRunException("Watch command called without enabling watch or specifying a watchFolder");
         }
 
+        // launch consumer
+        Thread consumer = new Thread(() -> {
+            try {
+                consume();
+            } catch (InterruptedException e) {
+            }
+        });
+        consumer.setDaemon(true);
+        consumer.start();
+
+        Exception caughtException = null;
+
         try {
             startWatching();
         } catch (CmdRunException e) {
-            throw e;
+            LOG.error("Caught exception while watching. Signalling consumer to stop");
+            stopConsuming = true;
+            caughtException = e;
+        }
+
+        if (caughtException != null) {
+            LOG.error("Caught exception: {}", caughtException.getMessage());
+        }
+
+        LOG.info("In finally, joining consumer thread");
+
+        try {
+            consumer.join();
+        } catch (InterruptedException e) {
         }
 
         LOG.info("WatchFolderCommand completed.");
@@ -134,11 +167,11 @@ public class WatchFolderCommand extends Command {
 
                     File file = path.resolve(dirEntry).toFile(); 
 
-                    LOG.info("File changed, launching processor: {}", file.getAbsolutePath());
+                    LOG.info("File changed, adding to process queue: {}", file.getAbsolutePath());
 
-                    launchProcessor(file);
+                    addFileToQueue(file);
                 
-                    LOG.debug("Processor launched, resuming pollEvents");
+                    LOG.debug("Resuming pollEvents");
                 }
 
                 LOG.debug("All events polled, resetting WatchKey");
@@ -158,22 +191,59 @@ public class WatchFolderCommand extends Command {
         }
     }
 
-    private void launchProcessor(File file) {
-        ProcessRunner runner = null;
-        
-        RunConfig clonedConfig = cloneRunConfig(this.runConfig);
-        clonedConfig.filePath = file.getAbsolutePath();
-        
-        if (this.runConfig.useScript && !Strings.isNullOrEmpty(this.runConfig.cdrParseScript)) {
-            LOG.info("Launching background script-based processor for file: {}", file.getAbsolutePath());
-            runner = new ProcessScriptRunner(clonedConfig, this.LOG);
-        } else {
-            LOG.info("Launching background processor for file: {}", file.getAbsolutePath());
-            runner = new ProcessRunnerImpl(clonedConfig, this.LOG);
+    private void addFileToQueue(File file) {
+        String path = file.getAbsolutePath();
+        LOG.info("Adding file to queue: {}", path);
+
+        synchronized(lock) {
+            this.fileQueue.add(path);
         }
-        
-        Thread thread = new Thread(runner);
-        thread.setDaemon(true);
-        thread.start();
+    }
+
+    private void consume() throws InterruptedException {
+        LOG.info("Entering consume");
+
+        while (true) {
+            if (stopConsuming) {
+                LOG.info("Consumer caught stopConsuming, exiting");
+                break;
+            }
+
+            // If no files to process, sleep for 1 second
+            if (this.fileQueue.isEmpty()) {
+                LOG.debug("In consumer, no files in queue, sleeping for 1 second");
+                Thread.sleep(1000);
+                continue;
+            }
+
+            // Check for a file to process
+            String filePathToProcess = null;
+
+            synchronized (this.lock) {
+                if (!this.fileQueue.isEmpty()) {
+                    filePathToProcess = this.fileQueue.remove(0);
+                }
+            }
+
+            if (!Strings.isNullOrEmpty(filePathToProcess)) {
+                ProcessRunner runner = null;
+
+                RunConfig clonedConfig = cloneRunConfig(this.runConfig);
+                clonedConfig.filePath = filePathToProcess;
+
+                if (this.runConfig.useScript && !Strings.isNullOrEmpty(this.runConfig.cdrParseScript)) {
+                    LOG.info("Launching background script-based processor for file: {}", filePathToProcess);
+                    runner = new ProcessScriptRunner(clonedConfig, this.LOG);
+                } else {
+                    LOG.info("Launching background processor for file: {}", filePathToProcess);
+                    runner = new ProcessRunnerImpl(clonedConfig, this.LOG);
+                }
+
+                // For now, blocking until processing current file is done, but could launch multiple threads here
+                runner.run();
+            }
+        }
+
+        LOG.info("Exiting consume");
     }
 }

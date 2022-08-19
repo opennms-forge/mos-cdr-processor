@@ -99,8 +99,13 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
 
         final long timestamp = cdrRecord.getFileTime().getTime();
 
+        // For now just emit MOS messages
         for (CdrRecordItem item : cdrRecord) {
             List<Pair<String,Long>> pairs = List.of(
+                Pair.of("Acme_Calling_MOS", item.acmeCallingMOS),
+                Pair.of("Acme_Called_MOS", item.acmeCalledMOS)
+
+                /*
                 Pair.of("Acct_Status_Type", item.acctStatusType),
                 Pair.of("Acct_Session_Time", item.acctSessionTime),
                 Pair.of("Acme_Calling_RTCP_Packets_Lost_FS1", item.acmeCallingRTCPPacketsLostFS1),
@@ -112,7 +117,6 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
                 Pair.of("Acme_Calling_RTP_Avg_Jitter_FS1", item.acmeCallingRTPAvgJitterFS1),
                 Pair.of("Acme_Calling_RTP_MaxJitter_FS1", item.acmeCallingRTPMaxJitterFS1),
                 Pair.of("Acme_Calling_R_Factor", item.acmeCallingRFactor),
-                Pair.of("Acme_Calling_MOS", item.acmeCallingMOS),
                 Pair.of("Acme_Called_RTCP_Packets_Lost_FS1", item.acmeCalledRTCPPacketsLostFS1),
                 Pair.of("Acme_Called_RTCP_Avg_Jitter_FS1", item.acmeCalledRTCPAvgJitterFS1),
                 Pair.of("Acme_Called_RTCP_Avg_Latency_FS1", item.acmeCalledRTCPAvgLatencyFS1),
@@ -122,7 +126,7 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
                 Pair.of("Acme_Called_RTP_Avg_Jitter_FS1", item.acmeCalledRTPAvgJitterFS1),
                 Pair.of("Acme_Called_RTP_MaxJitter_FS1", item.acmeCalledRTPMaxJitterFS1),
                 Pair.of("Acme_Called_R_Factor", item.acmeCalledRFactor),
-                Pair.of("Acme_Called_MOS", item.acmeCalledMOS)
+                */
             );
 
             for (var pair : pairs) {
@@ -134,6 +138,7 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
     }
 
     private String addMetric(String base, String path, long value, long timestamp) {
-        return String.format("%s-%s %d %d", base, path, value, timestamp);
+        final String fakeIp = "127_0_0_1";
+        return String.format("%s.%s.%s %d %d", base, fakeIp, path, value, timestamp);
     }
 }
