@@ -244,20 +244,29 @@ public class WatchFolderCommand extends Command {
                 // For now, blocking until processing current file is done, but could launch multiple threads here
                 runner.run();
 
-                // Archive the file, removing it from drop folder so it's not reprocessed
-                if (!Strings.isNullOrEmpty(this.runConfig.archiveFolder)) {
+                // Archive or delete the file, removing it from drop folder so it's not reprocessed
+                File f = new File(clonedConfig.filePath);
+                Path source = Path.of(clonedConfig.filePath);
+
+                if (runConfig.enableArchive && !Strings.isNullOrEmpty(this.runConfig.archiveFolder)) {
                     try {
-                        File f = new File(clonedConfig.filePath);
-                        Path source = Path.of(clonedConfig.filePath);
                         Path dest = Path.of(clonedConfig.archiveFolder, f.getName());
 
-                        LOG.info("Archiving file '{}' to '{}'",
-                            source.toString(), dest.toString());
+                        LOG.info("Archiving file '{}' to '{}'", source.toString(), dest.toString());
 
                         Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
                         LOG.error("Could not archive file '{}' to folder '{}': {}",
                             clonedConfig.filePath, clonedConfig.archiveFolder, e.getMessage());
+                    }
+                } else if (runConfig.enableDelete) {
+                    try {
+                        LOG.info("Deleting file '{}'", source.toString());
+
+                        Files.delete(source);;
+                    } catch (IOException e) {
+                        LOG.error("Could not delete file '{}': {}",
+                            clonedConfig.filePath, e.getMessage());
                     }
                 }
             }

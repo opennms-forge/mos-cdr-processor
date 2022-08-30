@@ -54,6 +54,10 @@ public class RunConfig {
 
     public String watchFolder;
 
+    public boolean enableDelete;
+
+    public boolean enableArchive;
+
     public String archiveFolder;
 
     public List<String> extra = new ArrayList<>();

@@ -46,6 +46,7 @@ cd target
 java -jar moscdrprocessor-0.0.1-SNAPSHOT-onejar.jar watch --config "path/to/runConfig.json"
 ```
 
+You can use the `run-mos-cdr-processor.sh` script to do this as well.
 
 Debugging
 ---------
@@ -57,7 +58,7 @@ In VS Code, go to Run and Debug icon, make sure "Launch Starter" is selected, cl
 
 Make sure to have already put a breakpoint in Starter.main.
 
-Should already have done `mvn clean package -DskipTests`.
+Should already have run `mvn clean package -DskipTests`.
 
 It's not guaranteed that this project will build in VS Code; it will build via Maven, and can be debugged in VS Code.
 
@@ -70,3 +71,20 @@ After this, F11 for "Step Into" doesn't work right.
 Go into System Preferences, Keyboard, Shortcuts, Mission Control, deselect F11 (unmaps it from "Show Desktop").
 
 The Groovy script file log messages will display in the VS Code Terminal, these can be used as a debugging aid.
+
+
+Running and Configuration
+-------------------------
+
+When run in `watch` mode, the application will watch for any CDR files dropped into the `data/drop` folder 
+(or wherever specified in `runConfig.json`, `watchFolder` parameter).
+
+Files can be processed using the built-in CDR processor, or else via a Groovy script, `cdr-basic-message-generator.groovy`.
+
+For the built-in processor, you must supply a CDR header CSV file for AcctStatusType of 2 and specify in `runConfig.headerFile`.
+
+If `enableArchive` is set to `true` and an `archiveFolder` is set, as files are processed they will be moved from the 
+`drop` folder to the `archiveFolder`. This saves the original data files plus ensures they are not processed multiple times.
+
+If `enableDelete` is set to `true`, processed files will be deleted after processing. If `enableArchive` is set, archiving
+will take precedence.
