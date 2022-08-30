@@ -33,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 public class CdrRecordItem {
     public long acctStatusType;
     public long acctSessionTime;
+    public String nasIpAddress;
     public String h323SetupTime;
     public String h323ConnectTime;
     public String h323DisconnectTime;
@@ -76,6 +77,11 @@ public class CdrRecordItem {
     @JsonSetter("Acct-Session-Time")
     public void setAcctSessionTime(long value) {
         this.acctSessionTime = value;
+    }
+
+    @JsonSetter("NAS-IP-Address")
+    public void setNasIpAddress(String value) {
+        this.nasIpAddress = value;
     }
 
     @JsonSetter("h323-setup-time")

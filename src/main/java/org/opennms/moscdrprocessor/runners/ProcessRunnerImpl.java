@@ -129,16 +129,22 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
                 */
             );
 
+            // For now, using "NAS-IP-Address" from the CDR record to correlate ip address -> node ID saved in RRD
+
             for (var pair : pairs) {
-                graphiteMessages.add(addMetric(runConfig.graphiteBasePath, pair.getLeft(), pair.getRight(), timestamp));
+                graphiteMessages.add(addMetric(runConfig.graphiteBasePath, item.nasIpAddress, pair.getLeft(), pair.getRight(), timestamp));
             }
         }
         
         return graphiteMessages;
     }
 
-    private String addMetric(String base, String path, long value, long timestamp) {
-        final String fakeIp = "127_0_0_1";
-        return String.format("%s.%s.%s %d %d", base, fakeIp, path, value, timestamp);
+    private String addMetric(String base, String nasIpAddress, String path, long value, long timestamp) {
+        final String ipAddress = nasIpAddress
+            .trim()
+            .replace("\"", "")
+            .replace(".", "_");
+
+        return String.format("%s.%s.%s %d %d", base, ipAddress, path, value, timestamp);
     }
 }

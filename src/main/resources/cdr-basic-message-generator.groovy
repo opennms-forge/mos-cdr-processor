@@ -53,6 +53,8 @@ import org.opennms.moscdrprocessor.commands.RunConfig;
 class CdrGenerator {
     private RunConfig config;
 
+    private final String BASE_GRAPHITE_PATH = "mos-cdr";
+
     CdrGenerator(config) {
         this.config = config;
     }
@@ -134,6 +136,7 @@ class CdrGenerator {
         List<String> messages = new ArrayList<>();
 
         // 0-based index of specific fields we care about
+        final int NAS_IP_ADDRESS_INDEX = 1;
         final int ACME_CALLING_MOS_INDEX = 46;
         final int ACME_CALLED_MOS_INDEX = 70;
 
@@ -159,8 +162,16 @@ class CdrGenerator {
                 log.debug("Found record with status of 2");
 
                 // Pick out just the columns we are interested in
-                addValueIfPresent(messages, record, "mos-cdr.127_0_0_1.Acme_Calling_MOS", ACME_CALLING_MOS_INDEX, timestamp);
-                addValueIfPresent(messages, record, "mos-cdr.127_0_0_1.Acme_Called_MOS", ACME_CALLED_MOS_INDEX, timestamp);
+                // Using "NAS-IP-Address" as an IP address to correlate CDR data with an OpenNMS node
+                String ipAddress = record.get(NAS_IP_ADDRESS_INDEX)
+                    .trim()
+                    .replace("\"", "")
+                    .replace(".", "_");
+
+                String basePath = String.format("%s.%s", BASE_GRAPHITE_PATH, ipAddress);
+
+                addValueIfPresent(messages, record, String.format("%s.Acme_Calling_MOS", basePath), ACME_CALLING_MOS_INDEX, timestamp);
+                addValueIfPresent(messages, record, String.format("%s.Acme_Called_MOS", basePath), ACME_CALLED_MOS_INDEX, timestamp);
             }
         } catch (Exception e) {
             throw e;

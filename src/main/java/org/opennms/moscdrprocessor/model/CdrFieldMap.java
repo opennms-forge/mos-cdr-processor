@@ -46,6 +46,7 @@ public class CdrFieldMap {
 
         fieldTypeMap.put("Acct-Status-Type", "integer");
         fieldTypeMap.put("Acct-Session-Time", "integer");
+        fieldTypeMap.put("NAS-IP-Address", "string");
         fieldTypeMap.put("h323-setup-time", "string");
         fieldTypeMap.put("h323-connect-time", "string");
         fieldTypeMap.put("h323-disconnect-time", "string");
