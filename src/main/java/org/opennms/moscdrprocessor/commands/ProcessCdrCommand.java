@@ -28,12 +28,9 @@
 
 package org.opennms.moscdrprocessor.commands;
 
-import java.io.IOException;
-
 import com.google.common.base.Strings;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
 
 import org.opennms.moscdrprocessor.runners.ProcessRunner;
 import org.opennms.moscdrprocessor.runners.ProcessRunnerImpl;
@@ -42,25 +39,12 @@ import org.opennms.moscdrprocessor.runners.ProcessScriptRunner;
 /**
  * Command to parse a CDR file, then send MOS data via Graphite to a server.
  */
-public class ProcessCdrCommand extends Command {
+public class ProcessCdrCommand extends BasicCommand {
    
-    @Option(name = "--config", usage = "Full file path to config file", required = true, metaVar = "<config>")
-    private String configFilePath;
-
-    private RunConfig runConfig;
-
     @Override
     protected void execute() throws CmdRunException {
         LOG.info("In ProcessCdrCommand.execute");
-
-        // parse RunConfig. possibly push this up to base class
-        try {
-            runConfig = parseConfig(configFilePath);
-        } catch (IOException e) {
-            throw new CmdRunException("Error parsing config file '" + configFilePath + "': " + e.getMessage(), e);
-        }
-
-        LOG.debug("Successfully parsed config file.");
+        parseRunConfig();
 
         boolean shouldRunScript = runConfig.useScript && !Strings.isNullOrEmpty(runConfig.cdrParseScript);
 
@@ -71,20 +55,6 @@ public class ProcessCdrCommand extends Command {
         }
 
         LOG.info("ProcessCdrCommand completed.");
-    }
-
-    @Override
-    protected void validate(CmdLineParser parser) throws CmdLineException {
-    }
-
-    @Override
-    public void printUsage() {
-        super.printUsage();
-        LOG.info("");
-        LOG.info("Examples:");
-        LOG.info("  Specify a json config file: java -jar CdrProcessor.jar parse --config \"/usr/local/myconfig.json\"");
-        LOG.info("");
-        LOG.info("(replace CdrProcessor.jar with actual jar, e.g. moscdrprocessor-0.0.1-SNAPSHOT-onejar.jar)");
     }
 
     @Override

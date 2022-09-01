@@ -45,24 +45,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Strings;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
 
 import org.opennms.moscdrprocessor.runners.ProcessRunner;
 import org.opennms.moscdrprocessor.runners.ProcessRunnerImpl;
 import org.opennms.moscdrprocessor.runners.ProcessScriptRunner;
+import org.opennms.moscdrprocessor.runners.SingleCdrFileProcessor;
 
 /**
  * Command to watch a folder for CDR file drops, then process them.
  */
-public class WatchFolderCommand extends Command {
-    
-    @Option(name = "--config", usage = "Full file path to config file", required = true, metaVar = "<config>")
-    private String configFilePath;
-
-    private RunConfig runConfig;
-
+public class WatchFolderCommand extends BasicCommand {
     private volatile boolean stopConsuming;
 
     private Object lock = new Object();
@@ -72,18 +64,10 @@ public class WatchFolderCommand extends Command {
     @Override
     protected void execute() throws CmdRunException {
         LOG.info("In WatchFolderCommand.execute");
+        parseRunConfig();
 
-        // parse RunConfig. possibly push this up to base class
-        try {
-            runConfig = parseConfig(configFilePath);
-        } catch (IOException e) {
-            throw new CmdRunException("Error parsing config file '" + configFilePath + "': " + e.getMessage(), e);
-        }
-
-        LOG.debug("Successfully parsed config file.");
-
-        if (!runConfig.enableWatch || Strings.isNullOrEmpty(runConfig.watchFolder)) {
-            throw new CmdRunException("Watch command called without enabling watch or specifying a watchFolder");
+        if (!runConfig.enableWatch || Strings.isNullOrEmpty(runConfig.dropFolder)) {
+            throw new CmdRunException("Watch command called without enabling watch or specifying a dropFolder");
         }
 
         // launch consumer
@@ -121,20 +105,6 @@ public class WatchFolderCommand extends Command {
     }
 
     @Override
-    protected void validate(CmdLineParser parser) throws CmdLineException {
-    }
-
-    @Override
-    public void printUsage() {
-        super.printUsage();
-        LOG.info("");
-        LOG.info("Examples:");
-        LOG.info("  Specify a json config file: java -jar CdrProcessor.jar watch --config \"/usr/local/myconfig.json\"");
-        LOG.info("");
-        LOG.info("(replace CdrProcessor.jar with actual jar, e.g. moscdrprocessor-0.0.1-SNAPSHOT-onejar.jar)");
-    }
-
-    @Override
     protected String getDescription() {
         return "Watch a folder, process any CDR files dropped into it and send Graphite messages.";
     }
@@ -143,7 +113,7 @@ public class WatchFolderCommand extends Command {
         LOG.info("Starting watch");
 
         try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
-            Path path = Paths.get(runConfig.watchFolder);
+            Path path = Paths.get(runConfig.dropFolder);
 
             WatchKey registerKey = path.register(watchService, ENTRY_CREATE);
 
@@ -180,16 +150,16 @@ public class WatchFolderCommand extends Command {
                 boolean isKeyValid = key.reset();
 
                 if (!isKeyValid) {
-                    LOG.info("Stopped watch directory {}", runConfig.watchFolder);
+                    LOG.info("Stopped watch directory {}", runConfig.dropFolder);
                     break;
                 }
             }
         } catch (IOException ioe) {
             throw new CmdRunException(
-                String.format("IOException watching folder %s: %s", runConfig.watchFolder, ioe.getMessage()), ioe);
+                String.format("IOException watching folder %s: %s", runConfig.dropFolder, ioe.getMessage()), ioe);
         } catch (InterruptedException inte) {
             throw new CmdRunException(
-                String.format("InterruptedException watching folder %s: %s", runConfig.watchFolder, inte.getMessage()), inte);
+                String.format("InterruptedException watching folder %s: %s", runConfig.dropFolder, inte.getMessage()), inte);
         }
     }
 
@@ -227,48 +197,13 @@ public class WatchFolderCommand extends Command {
                 }
             }
 
-            if (!Strings.isNullOrEmpty(filePathToProcess)) {
-                ProcessRunner runner = null;
+            var processor = new SingleCdrFileProcessor();
 
+            if (!Strings.isNullOrEmpty(filePathToProcess)) {
                 RunConfig clonedConfig = cloneRunConfig(this.runConfig);
                 clonedConfig.filePath = filePathToProcess;
 
-                if (this.runConfig.useScript && !Strings.isNullOrEmpty(this.runConfig.cdrParseScript)) {
-                    LOG.info("Launching background script-based processor for file: {}", filePathToProcess);
-                    runner = new ProcessScriptRunner(clonedConfig, this.LOG);
-                } else {
-                    LOG.info("Launching background processor for file: {}", filePathToProcess);
-                    runner = new ProcessRunnerImpl(clonedConfig, this.LOG);
-                }
-
-                // For now, blocking until processing current file is done, but could launch multiple threads here
-                runner.run();
-
-                // Archive or delete the file, removing it from drop folder so it's not reprocessed
-                File f = new File(clonedConfig.filePath);
-                Path source = Path.of(clonedConfig.filePath);
-
-                if (runConfig.enableArchive && !Strings.isNullOrEmpty(this.runConfig.archiveFolder)) {
-                    try {
-                        Path dest = Path.of(clonedConfig.archiveFolder, f.getName());
-
-                        LOG.info("Archiving file '{}' to '{}'", source.toString(), dest.toString());
-
-                        Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        LOG.error("Could not archive file '{}' to folder '{}': {}",
-                            clonedConfig.filePath, clonedConfig.archiveFolder, e.getMessage());
-                    }
-                } else if (runConfig.enableDelete) {
-                    try {
-                        LOG.info("Deleting file '{}'", source.toString());
-
-                        Files.delete(source);;
-                    } catch (IOException e) {
-                        LOG.error("Could not delete file '{}': {}",
-                            clonedConfig.filePath, e.getMessage());
-                    }
-                }
+                processor.process(clonedConfig, filePathToProcess, LOG);
             }
         }
 

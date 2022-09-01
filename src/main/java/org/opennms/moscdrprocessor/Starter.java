@@ -36,12 +36,13 @@ import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommands;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 
+import org.opennms.moscdrprocessor.commands.BasicCommand;
 import org.opennms.moscdrprocessor.commands.CmdRunException;
 import org.opennms.moscdrprocessor.commands.Command;
 import org.opennms.moscdrprocessor.commands.ParseCdrCommand;
 import org.opennms.moscdrprocessor.commands.ProcessCdrCommand;
+import org.opennms.moscdrprocessor.commands.ProcessFolderCommand;
 import org.opennms.moscdrprocessor.commands.WatchFolderCommand;
-import org.opennms.moscdrprocessor.commands.BasicCommand;
 import org.opennms.moscdrprocessor.log.ConsoleLogAdapter;
 
 import java.io.PrintStream;
@@ -59,6 +60,7 @@ public class Starter extends Command {
             @SubCommand(name="basic", impl=BasicCommand.class),
             @SubCommand(name="parse", impl=ParseCdrCommand.class),
             @SubCommand(name="process", impl=ProcessCdrCommand.class),
+            @SubCommand(name="folder", impl=ProcessFolderCommand.class),
             @SubCommand(name="watch", impl=WatchFolderCommand.class)})
     private Command cmd;
 

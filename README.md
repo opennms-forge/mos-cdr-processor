@@ -77,7 +77,7 @@ Running and Configuration
 -------------------------
 
 When run in `watch` mode, the application will watch for any CDR files dropped into the `data/drop` folder 
-(or wherever specified in `runConfig.json`, `watchFolder` parameter).
+(or wherever specified in `runConfig.json`, `dropFolder` parameter).
 
 Files can be processed using the built-in CDR processor, or else via a Groovy script, `cdr-basic-message-generator.groovy`.
 

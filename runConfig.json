@@ -9,8 +9,9 @@
     "useScript": true,
     "cdrParseScript": "~/projects/mos-cdr-processor/src/main/resources/cdr-basic-message-generator.groovy",
     "enableWatch": true,
-    "watchFolder": "~/projects/mos-cdr-processor/data/drop",
+    "dropFolder": "~/projects/mos-cdr-processor/data/drop",
     "enableDelete": false,
     "enableArchive": false,
-    "archiveFolder": "~/projects/mos-cdr-processor/data/archive"
+    "archiveFolder": "~/projects/mos-cdr-processor/data/archive",
+    "sleepMillis": 200
 }

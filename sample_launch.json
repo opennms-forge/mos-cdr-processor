@@ -22,7 +22,7 @@
             "args": [
                 "watch",
                 "-v",
-                "--config", "~/projects/mos-cdr-processor/runConfig.json"
+                "--config", "~/projects/mos-cdr-processor/data/runConfig.json"
             ]
         },
         {

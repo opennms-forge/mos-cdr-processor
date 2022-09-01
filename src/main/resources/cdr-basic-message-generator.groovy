@@ -163,15 +163,14 @@ class CdrGenerator {
 
                 // Pick out just the columns we are interested in
                 // Using "NAS-IP-Address" as an IP address to correlate CDR data with an OpenNMS node
-                String ipAddress = record.get(NAS_IP_ADDRESS_INDEX)
-                    .trim()
-                    .replace("\"", "")
-                    .replace(".", "_");
+                String ipAddress = record.get(NAS_IP_ADDRESS_INDEX).trim().replace("\"", "");
 
-                String basePath = String.format("%s.%s", BASE_GRAPHITE_PATH, ipAddress);
+                String basePath = String.format("%s:%s", BASE_GRAPHITE_PATH, ipAddress);
 
-                addValueIfPresent(messages, record, String.format("%s.Acme_Calling_MOS", basePath), ACME_CALLING_MOS_INDEX, timestamp);
-                addValueIfPresent(messages, record, String.format("%s.Acme_Called_MOS", basePath), ACME_CALLED_MOS_INDEX, timestamp);
+                // these will be in format:
+                // "mos-cdr:127.0.0.1:Acme_Calling_MOS 123 1660003200000"
+                addValueIfPresent(messages, record, String.format("%s:Acme_Calling_MOS", basePath), ACME_CALLING_MOS_INDEX, timestamp);
+                addValueIfPresent(messages, record, String.format("%s:Acme_Called_MOS", basePath), ACME_CALLED_MOS_INDEX, timestamp);
             }
         } catch (Exception e) {
             throw e;

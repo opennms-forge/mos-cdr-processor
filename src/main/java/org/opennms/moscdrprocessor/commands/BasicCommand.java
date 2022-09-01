@@ -28,23 +28,23 @@
 
 package org.opennms.moscdrprocessor.commands;
 
+import java.io.IOException;
+
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 /**
  * Implements the "basic" command functionality.
  */
-public class BasicCommand extends Command {
-    @Override
-    protected void execute() {
-        LOG.info("In BasicCommand.execute");
-        LOG.info("Currently does nothing ;)");
-    }
+public abstract class BasicCommand extends Command {
+    @Option(name = "--config", usage = "Full file path to config file", required = true, metaVar = "<config>")
+    protected String configFilePath;
+
+    protected RunConfig runConfig;
 
     @Override
     protected void validate(CmdLineParser parser) throws CmdLineException {
-        LOG.info("In BasicCommand.validate");
-        LOG.info("Currently does nothing ;)");
     }
 
     @Override
@@ -52,11 +52,18 @@ public class BasicCommand extends Command {
         super.printUsage();
         LOG.info("");
         LOG.info("Examples:");
-        LOG.info("(no examples yet....)");
+        LOG.info("  Specify a json config file: java -jar CdrProcessor.jar watch --config \"/usr/local/myconfig.json\"");
+        LOG.info("");
+        LOG.info("(replace CdrProcessor.jar with actual jar, e.g. moscdrprocessor-0.0.1-SNAPSHOT-onejar.jar)");
     }
 
-    @Override
-    protected String getDescription() {
-        return "Does basic CDR processing....";
+    protected void parseRunConfig() throws CmdRunException {
+        try {
+            runConfig = parseConfig(configFilePath);
+        } catch (IOException e) {
+            throw new CmdRunException("Error parsing config file '" + configFilePath + "': " + e.getMessage(), e);
+        }
+
+        LOG.debug("Successfully parsed config file.");
     }
 }

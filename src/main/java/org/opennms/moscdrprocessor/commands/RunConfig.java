@@ -52,13 +52,15 @@ public class RunConfig {
 
     public boolean enableWatch;
 
-    public String watchFolder;
+    public String dropFolder;
 
     public boolean enableDelete;
 
     public boolean enableArchive;
 
     public String archiveFolder;
+
+    public Long sleepMillis;
 
     public List<String> extra = new ArrayList<>();
 }
