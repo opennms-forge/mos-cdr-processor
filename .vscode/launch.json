@@ -17,9 +17,9 @@
             "mainClass": "org.opennms.moscdrprocessor.Starter",
             "projectName": "moscdrprocessor",
             "args": [
-                "watch",
+                "folder",
                 "-v",
-                "--config", "~/projects/mos-cdr-processor/runConfig.json"
+                "--config", "~/projects/mos-cdr-processor/data/runConfig.json"
             ]
         },
         {
