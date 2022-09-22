@@ -59,7 +59,6 @@ import org.opennms.netmgt.telemetry.protocols.graphite.adapter.GraphiteMetric
 @Slf4j
 class CollectionSetGenerator {
     static generate(agent, builder, graphiteMsg, factory, agentList, nodeDao) {
-        //log.debug("Generating collection set for message: {}", graphiteMsg)
         log.debug("Generating collection set for message: {}", graphiteMsg)
 
         if (graphiteMsg.path.startsWith("mos-cdr:")) {
