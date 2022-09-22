@@ -142,7 +142,7 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
     private String addMetric(String base, String nasIpAddress, String path, long value, long timestamp) {
         final String ipAddress = nasIpAddress.trim().replace("\"", "");
 
-        // these will be in format like:
+        // these will be in format as follows. timestamp is in ms since epoch
         // "mos-cdr:127.0.0.1:Acme_Called_MOS 123 1660003200000"
         return String.format("%s:%s:%s %d %d", base, ipAddress, path, value, timestamp);
     }
