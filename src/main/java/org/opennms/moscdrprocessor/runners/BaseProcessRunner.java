@@ -96,7 +96,7 @@ public abstract class BaseProcessRunner implements ProcessRunner, Runnable {
             graphiteClients = new GraphiteClient[runConfig.recipients.size()];
 
             for (int i = 0; i < runConfig.recipients.size(); i++) {
-                RecipientInfo info = runConfig.recipients.get(0);
+                RecipientInfo info = runConfig.recipients.get(i);
                 graphiteClients[i] = new GraphiteClientImpl(info.hostName, info.port, LOG.isDebugEnabled());
             }
         }
