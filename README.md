@@ -6,6 +6,7 @@ Overview
 
 MosCdrProcessor is a Java CLI application to watch a "drop" directory, parse CDR (Call Data Record) files
 (generally in CSV format), parse out MOS (Mean Opinion Score) values and send to OpenNMS via Graphite messages.
+Values are then stored in a timeseries database (RRD, JRobin or Cortex) and can be viewed via Grafana/HELM.
 
 
 Features
@@ -23,11 +24,20 @@ These features are in various stages of development.
 
 * **Graphite**
 
-    Send Graphite messages (basically, path - numeric value - timestamp) to a Graphite server, typically OpenNMS.
+    Send Graphite messages (basically, path - numeric value - timestamp) to one or more Graphite servers,
+    typically an OpenNMS instance.
+
+* **Folder processing**
+
+    Process all files in a folder in timeseries order.
 
 * **File Watching**
 
     Watch a folder for new CDR files and automatically process them
+
+* **Archiving**
+
+    Archive processed files.
 
 
 Development / Build
@@ -76,15 +86,26 @@ The Groovy script file log messages will display in the VS Code Terminal, these 
 Running and Configuration
 -------------------------
 
+Configure using `data/runConfig.json`. See `RunConfig` class for more info. A sample can be found in `data/runConfig.json`.
+
+Use `recipients` to set one or more OpenNMS or other Graphite server instances to send messages to.
+Define `hostName` and `port` for each.
+
 When run in `watch` mode, the application will watch for any CDR files dropped into the `data/drop` folder 
 (or wherever specified in `runConfig.json`, `dropFolder` parameter).
+
+When run in `folder` mode, the application will find all CDR records in the `drop` folder and process them
+in alphabetical order, which should mean they are processed in timeseries order and will be correctly
+saved in-order in the timeseries database (RRD, JRobin or Cortex).
 
 Files can be processed using the built-in CDR processor, or else via a Groovy script, `cdr-basic-message-generator.groovy`.
 
 For the built-in processor, you must supply a CDR header CSV file for AcctStatusType of 2 and specify in `runConfig.headerFile`.
+This is used to determine which column the data will be found in.
+Support is only provided for AcctStatusType of 2.
 
 If `enableArchive` is set to `true` and an `archiveFolder` is set, as files are processed they will be moved from the 
-`drop` folder to the `archiveFolder`. This saves the original data files plus ensures they are not processed multiple times.
+`dropFolder` folder to the `archiveFolder`. This saves the original data files plus ensures they are not processed multiple times.
 
-If `enableDelete` is set to `true`, processed files will be deleted after processing. If `enableArchive` is set, archiving
-will take precedence.
+If `enableDelete` is set to `true`, processed files will be deleted after processing. Use with caution!
+If `enableArchive` is set, archiving will take precedence.
