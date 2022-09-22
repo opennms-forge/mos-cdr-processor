@@ -98,7 +98,10 @@ class CollectionSetGenerator {
             agentList.add(overrideAgent);
             //log.debug("Created overridden collection agent");
 
-            String ifaceLabel = RrdLabelUtils.computeLabelForRRD("mos_cdr_" + ipAddr, null, null);
+            // Just want the IP address with '.' instead of '_' to be able to use
+            // IP address as a template variable in Grafana/HELM
+            //String ifaceLabel = RrdLabelUtils.computeLabelForRRD("mos_cdr_" + ipAddr, null, null);
+            String ifaceLabel = ipAddr;
             //log.debug("ifaceLabel: " + ifaceLabel);
 
             InterfaceLevelResource interfaceResource = new InterfaceLevelResource(nodeLevelResource, ifaceLabel);
