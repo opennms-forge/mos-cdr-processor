@@ -32,6 +32,10 @@ import java.util.List;
 import java.util.Map;
 
 public interface GraphiteClient {
+    String getHostName();
+
+    int getPort();
+
     void sendMetric(String key, Number value);
   
     void sendMetrics(Map<String, List<Number>> metrics);

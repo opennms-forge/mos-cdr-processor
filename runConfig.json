@@ -3,9 +3,11 @@
     "headerFilePath": "~/projects/mos-cdr-processor/data/SBC_Headers.csv",
     "enableOutput": false,
     "outputFilePath": "~/projects/mos-cdr-processor/data/cdrOutput.json",
-    "hostName": "localhost",
-    "port": 2003,
-    "graphiteBasePath": "eth0.mos",
+    "recipients": [
+        { "hostName": "localhost", "port": 2003 }
+    ],
+    "suppressSendGraphite": false,
+    "graphiteBasePath": "mos-cdr",
     "useScript": true,
     "cdrParseScript": "~/projects/mos-cdr-processor/src/main/resources/cdr-basic-message-generator.groovy",
     "enableWatch": true,

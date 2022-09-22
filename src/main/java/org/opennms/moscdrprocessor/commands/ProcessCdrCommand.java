@@ -37,7 +37,7 @@ import org.opennms.moscdrprocessor.runners.ProcessRunnerImpl;
 import org.opennms.moscdrprocessor.runners.ProcessScriptRunner;
 
 /**
- * Command to parse a CDR file, then send MOS data via Graphite to a server.
+ * Command to parse a CDR file, then send MOS data via Graphite to one or more servers.
  */
 public class ProcessCdrCommand extends BasicCommand {
    

@@ -36,11 +36,13 @@ import org.opennms.moscdrprocessor.client.GraphiteClient;
 import org.opennms.moscdrprocessor.client.GraphiteClientImpl;
 import org.opennms.moscdrprocessor.commands.CmdRunException;
 import org.opennms.moscdrprocessor.commands.RunConfig;
+import org.opennms.moscdrprocessor.commands.RunConfig.RecipientInfo;
 import org.opennms.moscdrprocessor.log.LogAdapter;
 
 public abstract class BaseProcessRunner implements ProcessRunner, Runnable {
     protected RunConfig runConfig;
     protected LogAdapter LOG;
+    protected GraphiteClient[] graphiteClients;
     
     public BaseProcessRunner(RunConfig runConfig, LogAdapter logger) {
         this.runConfig = runConfig;
@@ -62,15 +64,8 @@ public abstract class BaseProcessRunner implements ProcessRunner, Runnable {
         List<String> messages = parseFileToMessages();
 
         // send the messages
-        boolean sendGraphite =
-            !Strings.isNullOrEmpty(runConfig.hostName) &&
-            runConfig.port > 0 &&
-            !Strings.isNullOrEmpty(runConfig.graphiteBasePath);
-
-        if (sendGraphite) {
+        if (!runConfig.suppressSendGraphite) {
             LOG.info("Sending Graphite messages for CDR record.");
-            LOG.debug("host: {}, port: {}, Graphite base path: {}",
-                runConfig.hostName, runConfig.port, runConfig.graphiteBasePath);
 
             sendGraphiteMessages(messages);
         }
@@ -81,9 +76,29 @@ public abstract class BaseProcessRunner implements ProcessRunner, Runnable {
     // Override this to create the Graphite messages from runConfig.filePath
     protected abstract List<String> parseFileToMessages() throws CmdRunException;
 
-    protected void sendGraphiteMessages(List<String> messages) {
-        GraphiteClient client = new GraphiteClientImpl(runConfig.hostName, runConfig.port, LOG.isDebugEnabled());
+    protected void sendGraphiteMessages(List<String> messages) throws CmdRunException {
+        ensureGraphiteClients();
 
-        client.sendMessages(messages);
+        for (var client : graphiteClients) {
+            LOG.debug("Sending Graphite message to host: {}, port: {}, Graphite base path: {}",
+                client.getHostName(), client.getPort(), runConfig.graphiteBasePath);
+
+            client.sendMessages(messages);
+        }
+    }
+
+    protected void ensureGraphiteClients() throws CmdRunException {
+        if (graphiteClients == null) {
+            if (runConfig.recipients == null || runConfig.recipients.isEmpty()) {
+                throw new CmdRunException("No recipients specified");
+            }
+
+            graphiteClients = new GraphiteClient[runConfig.recipients.size()];
+
+            for (int i = 0; i < runConfig.recipients.size(); i++) {
+                RecipientInfo info = runConfig.recipients.get(0);
+                graphiteClients[i] = new GraphiteClientImpl(info.hostName, info.port, LOG.isDebugEnabled());
+            }
+        }
     }
 }

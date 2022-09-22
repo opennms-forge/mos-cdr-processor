@@ -52,6 +52,16 @@ public class GraphiteClientImpl implements GraphiteClient {
     }
 
     @Override
+    public String getHostName() {
+        return this.host;
+    }
+
+    @Override
+    public int getPort() {
+        return this.port;
+    }
+
+    @Override
     public void sendMetric(String key, Number value) {
         sendMetric(key, value, getCurrentTimestamp());
     }
