@@ -30,8 +30,10 @@ package org.opennms.moscdrprocessor.runners;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import com.google.common.base.Strings;
-import org.apache.commons.lang3.tuple.Pair;
 
 import org.opennms.moscdrprocessor.commands.CmdRunException;
 import org.opennms.moscdrprocessor.commands.RunConfig;
@@ -39,14 +41,22 @@ import org.opennms.moscdrprocessor.log.LogAdapter;
 import org.opennms.moscdrprocessor.model.CdrHeader;
 import org.opennms.moscdrprocessor.model.CdrRecord;
 import org.opennms.moscdrprocessor.model.CdrRecordItem;
+import org.opennms.moscdrprocessor.model.IpPatternFilter;
 import org.opennms.moscdrprocessor.parsers.CdrParser;
 import org.opennms.moscdrprocessor.parsers.CdrParserImpl;
 import org.opennms.moscdrprocessor.parsers.CdrParserException;
 
 public class ProcessRunnerImpl extends BaseProcessRunner {
+    private static Pattern PATTERN_IP_ADDRESS = Pattern.compile("^([0-9]{1,3}\\.){3}[0-9]{1,3}$");
     
+    private final List<IpPatternFilter> filters;
+
     public ProcessRunnerImpl(RunConfig runConfig, LogAdapter logger) {
         super(runConfig, logger);
+
+        filters = runConfig.sourceIpFiltersAnyOf.stream()
+            .map(IpPatternFilter::new)
+            .collect(Collectors.toList());
     }
 
     protected List<String> parseFileToMessages() throws CmdRunException {
@@ -101,47 +111,68 @@ public class ProcessRunnerImpl extends BaseProcessRunner {
 
         // For now just emit MOS messages
         for (CdrRecordItem item : cdrRecord) {
-            List<Pair<String,Long>> pairs = List.of(
-                Pair.of("Acme_Calling_MOS", item.acmeCallingMOS),
-                Pair.of("Acme_Called_MOS", item.acmeCalledMOS)
-
-                /*
-                Pair.of("Acct_Status_Type", item.acctStatusType),
-                Pair.of("Acct_Session_Time", item.acctSessionTime),
-                Pair.of("Acme_Calling_RTCP_Packets_Lost_FS1", item.acmeCallingRTCPPacketsLostFS1),
-                Pair.of("Acme_Calling_RTCP_Avg_Jitter_FS1", item.acmeCallingRTCPAvgJitterFS1),
-                Pair.of("Acme_Calling_RTCP_Avg_Latency_FS1", item.acmeCallingRTCPAvgLatencyFS1),
-                Pair.of("Acme_Calling_RTCP_MaxJitter_FS1", item.acmeCallingRTCPMaxJitterFS1),
-                Pair.of("Acme_Calling_RTCP_MaxLatency_FS1", item.acmeCallingRTCPMaxLatencyFS1),
-                Pair.of("Acme_Calling_RTP_Packets_Lost_FS1", item.acmeCallingRTPPacketsLostFS1),
-                Pair.of("Acme_Calling_RTP_Avg_Jitter_FS1", item.acmeCallingRTPAvgJitterFS1),
-                Pair.of("Acme_Calling_RTP_MaxJitter_FS1", item.acmeCallingRTPMaxJitterFS1),
-                Pair.of("Acme_Calling_R_Factor", item.acmeCallingRFactor),
-                Pair.of("Acme_Called_RTCP_Packets_Lost_FS1", item.acmeCalledRTCPPacketsLostFS1),
-                Pair.of("Acme_Called_RTCP_Avg_Jitter_FS1", item.acmeCalledRTCPAvgJitterFS1),
-                Pair.of("Acme_Called_RTCP_Avg_Latency_FS1", item.acmeCalledRTCPAvgLatencyFS1),
-                Pair.of("Acme_Called_RTCP_MaxJitter_FS1", item.acmeCalledRTCPMaxJitterFS1),
-                Pair.of("Acme_Called_RTCP_MaxLatency_FS1", item.acmeCalledRTCPMaxLatencyFS1),
-                Pair.of("Acme_Called_RTP_Packets_Lost_FS1", item.acmeCalledRTPPacketsLostFS1),
-                Pair.of("Acme_Called_RTP_Avg_Jitter_FS1", item.acmeCalledRTPAvgJitterFS1),
-                Pair.of("Acme_Called_RTP_MaxJitter_FS1", item.acmeCalledRTPMaxJitterFS1),
-                Pair.of("Acme_Called_R_Factor", item.acmeCalledRFactor),
-                */
-            );
-
-            // For now, using "NAS-IP-Address" from the CDR record to correlate ip address -> node ID saved in RRD
-
-            for (var pair : pairs) {
-                graphiteMessages.add(addMetric(runConfig.graphiteBasePath, item.nasIpAddress, pair.getLeft(), pair.getRight(), timestamp));
+            Optional<String> ipAddress = extractIpAddress(item);
+            
+            if (!ipAddress.isPresent()) {
+                LOG.error("Could not find valid IP for record: {}", item.ipCandidateDiagnosticString());
             }
+            
+            LOG.info("DEBUG found IP {} for record, considered: {}", ipAddress.get(), item.ipCandidateDiagnosticString());
+            
+            graphiteMessages.add(addMetric(runConfig.graphiteBasePath, ipAddress.get(), "Acme_Calling_MOS", item.acmeCallingMOS, timestamp));
+            graphiteMessages.add(addMetric(runConfig.graphiteBasePath, ipAddress.get(), "Acme_Called_MOS", item.acmeCalledMOS, timestamp));
         }
         
         return graphiteMessages;
     }
 
-    private String addMetric(String base, String nasIpAddress, String path, long value, long timestamp) {
-        final String ipAddress = nasIpAddress.trim().replace("\"", "");
+    /**
+     * Get the possible IP addresses from the CDR record item.
+     * Clean them and determine which one should be used as the one associated with the
+     * OpenNMS node to correlate this record with.
+     */
+    private Optional<String> extractIpAddress(CdrRecordItem item) {
+        // Possible fields which could contain IP address to use
+        // These are in order of preference
+        List<String> rawAddresses = List.of(
+            item.acmeFlowOutSrcAddrFS1F,
+            item.acmeFlowInDstAddrFS1F,
+            item.acmeFlowInSrcAddrFS1F,
+            item.acmeFlowOutDstAddrFS1F,
+            item.acmeFlowInSrcAddrFS1R,
+            item.acmeFlowInDstAddrFS1R,
+            item.acmeFlowOutSrcAddrFS1R,
+            item.acmeFlowOutDstAddrFS1R
+        );
 
+        // Clean up and filter the fields to ensure they are valid, cleaned IP addresses
+        List<String> cleanedIpAddresses =
+            rawAddresses.stream()
+                .map(String::trim)
+                .map(x -> x.replace("\"", ""))
+                .filter(x -> !x.isEmpty())
+                .filter(x -> PATTERN_IP_ADDRESS.matcher(x).find())
+                .collect(Collectors.toList());
+
+        // Filter based on configuration
+        // A filter such as "10.0-253.*.*" means:
+        // - literal 10 for first octet
+        // - 2nd octet can be between 0-253 inclusive
+        // - 3rd and 4th octets can be any number
+
+        List<String> filteredAddresses =
+            cleanedIpAddresses.stream()
+            .filter(ipAddr -> this.filters.stream().anyMatch(f -> f.isMatch(ipAddr)))
+            .collect(Collectors.toList());
+
+        if (!filteredAddresses.isEmpty()) {
+            return Optional.of(filteredAddresses.get(0));
+        }
+
+        return Optional.empty();
+    }
+
+    private String addMetric(String base, String ipAddress, String path, long value, long timestamp) {
         // these will be in format as follows. timestamp is in ms since epoch
         // "mos-cdr:127.0.0.1:Acme_Called_MOS 123 1660003200000"
         return String.format("%s:%s:%s %d %d", base, ipAddress, path, value, timestamp);

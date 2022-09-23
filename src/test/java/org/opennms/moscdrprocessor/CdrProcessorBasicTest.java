@@ -44,7 +44,7 @@ public class CdrProcessorBasicTest {
     private static final Logger LOG = LoggerFactory.getLogger(CdrProcessorBasicTest.class);
 
     @Rule
-    public TestName m_testName = new TestName();
+    public TestName testName = new TestName();
 
     @Before
     public void setUp() throws Exception {

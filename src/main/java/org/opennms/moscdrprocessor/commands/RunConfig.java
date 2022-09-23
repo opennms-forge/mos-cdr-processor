@@ -80,6 +80,12 @@ public class RunConfig {
      */
     public Long sleepMillis;
 
+    /**
+     * List of IP filter patterns, valid IP for Graphite message can be any of these.
+     * Used to determine which IP address to send in Graphite message, to correlate with an OpenNMS node.
+     */
+    public List<String> sourceIpFiltersAnyOf;
+
     /** Placeholder for any extra attributes. */
     public List<String> extra = new ArrayList<>();
 

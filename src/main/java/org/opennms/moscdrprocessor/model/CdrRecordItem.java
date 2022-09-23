@@ -28,6 +28,7 @@
 
 package org.opennms.moscdrprocessor.model;
 
+import java.lang.StringBuilder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 public class CdrRecordItem {
@@ -252,5 +253,21 @@ public class CdrRecordItem {
     @JsonSetter("Acme-Called-MOS")
     public void setAcmeCalledMOS(long value) {
         this.acmeCalledMOS = value;
+    }
+
+    public String ipCandidateDiagnosticString() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Acme-Flow-In-Src-Addr-FS1_F").append(": ").append(this.acmeFlowInSrcAddrFS1F).append(",\n");
+        builder.append("Acme-Flow-In-Dst-Addr-FS1_F").append(": ").append(this.acmeFlowInDstAddrFS1F).append(",\n");
+        builder.append("Acme-Flow-Out-Src-Addr-FS1_F").append(": ").append(this.acmeFlowOutSrcAddrFS1F).append(",\n");
+        builder.append("Acme-Flow-Out-Dst-Addr-FS1_F").append(": ").append(this.acmeFlowOutDstAddrFS1F).append(",\n");
+
+        builder.append("Acme-Flow-In-Src-Addr-FS1_R").append(": ").append(this.acmeFlowInSrcAddrFS1R).append(",\n");
+        builder.append("Acme-Flow-In-Dst-Addr-FS1_R").append(": ").append(this.acmeFlowInDstAddrFS1R).append(",\n");
+        builder.append("Acme-Flow-Out-Src-Addr-FS1_R").append(": ").append(this.acmeFlowOutSrcAddrFS1R).append(",\n");
+        builder.append("Acme-Flow-Out-Dst-Addr-FS1_R").append(": ").append(this.acmeFlowOutDstAddrFS1R);
+
+        return builder.toString();
     }
 }
