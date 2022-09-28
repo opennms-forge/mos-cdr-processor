@@ -171,9 +171,18 @@ Follow instructions found there. You will need to build the plugin locally, add 
 Grafana/HELM Setup
 ------------------
 
-To view the values in Grafana using HELM, you'll need to install the OpenNMS HELM plugin and OpenNMS Entities Datasource in Grafana. Currenty support is for Grafana 8.
+To view the values in Grafana using HELM, you'll need to install the OpenNMS HELM plugin and OpenNMS Entities Datasource in Grafana. Current support is for Grafana 8.
 
 Example dashboard will be uploaded here or sent directly.
 
+Values will show up under the something like the following. In `snmp/1/127.0.0.1`, `1` is the node ID and `127.0.0.1` is the IP address of that same node.
+
+
+```
+Acme_Called_MOS{location="Default", node="localhost", resourceId="snmp/1/127.0.0.1/mos-cdr"}
+Acme_Calling_MOS{location="Default", node="localhost", resourceId="snmp/1/127.0.0.1/mos-cdr"}
+```
+
+You can also use `node=~".*"` and then use the template variable `resourceip` to set the IP address of the correlated node.
 
 
